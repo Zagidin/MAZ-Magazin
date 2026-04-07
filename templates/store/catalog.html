@@ -1,0 +1,90 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Каталог - MZSH{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-list"></i> Каталог запчастей
+        </h1>
+        
+        <!-- Фильтры -->
+        <form class="search-form" method="get">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" placeholder="Поиск по артикулу или названию..." value="{{ query }}">
+            </div>
+            
+            <div class="filters">
+                <select name="category" class="filter-select">
+                    <option value="">Все категории</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if category_id == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                
+                <select name="equipment" class="filter-select">
+                    <option value="">Вся техника</option>
+                    {% for eq in equipment_types %}
+                        <!-- 🔧 value = реальное название из БД -->
+                        <option value="{{ eq.name }}" {% if equipment == eq.name %}selected{% endif %}>
+                            {{ eq.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                
+                <label class="checkbox-filter">
+                    <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}>
+                    <span>В наличии</span>
+                </label>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Применить
+                </button>
+            </div>
+        </form>
+        
+        <!-- Товары -->
+        <div class="products-grid">
+            {% for product in products %}
+            <div class="product-card" onclick="window.location='{% url 'store:product_detail' product.id %}'">
+                <div class="product-image">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="{% static 'img/no-image.png' %}" alt="{{ product.name }}">
+                    {% endif %}
+                    {% if product.quantity == 0 %}
+                        <span class="badge out-of-stock">Нет в наличии</span>
+                    {% elif product.quantity < 5 %}
+                        <span class="badge low-stock">Осталось {{ product.quantity }}</span>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3>{{ product.name }}</h3>
+                    <p class="article">Артикул: {{ product.article }}</p>
+                    <div class="product-footer">
+                        <span class="price">{{ product.price }} ₽</span>
+                        {% if not user.is_staff %}
+                            <button class="btn btn-primary btn-sm"
+                                    onclick="event.stopPropagation(); addToCart({{ product.id }})">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-products">
+                <i class="fas fa-box-open"></i>
+                <p>Товары не найдены</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

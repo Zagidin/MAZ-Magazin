@@ -1,0 +1,191 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Оформление заказа - MZSH{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-clipboard-check"></i> Оформление заказа
+        </h1>
+        
+        <div class="checkout-wrapper">
+            <!-- Форма -->
+            <div class="checkout-form">
+                <form method="post" id="checkoutForm">
+                    {% csrf_token %}
+                    
+                    <div class="checkout-section">
+                        <h3><i class="fas fa-user"></i> Данные покупателя</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="last_name">Фамилия *</label>
+                                <input type="text" id="last_name" name="last_name" required 
+                                       class="form-control" placeholder="Магамедрагимов">
+                            </div>
+                            
+                            <!-- Имя (авто-подстановка с фолбэком) -->
+                            <div class="form-group">
+                                <label for="first_name">Имя *</label>
+                                <input type="text" id="first_name" name="first_name" required
+                                       class="form-control" placeholder="Загидин"
+                                       value="{% if user.is_authenticated %}{% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}{% endif %}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="patronymic">Отчество</label>
+                                <input type="text" id="patronymic" name="patronymic" 
+                                       class="form-control" placeholder="Шалбузович">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="phone">Телефон *</label>
+                                <input type="tel" id="phone" name="phone" required 
+                                       class="form-control" placeholder="+7 (999) 999-99-99">
+                            </div>
+                        </div>
+                        
+                        <!-- Email (авто-подстановка) -->
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email"
+                                   class="form-control" placeholder="email@example.com"
+                                   value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-section">
+                        <h3><i class="fas fa-truck"></i> Способ получения</h3>
+                        
+                        <div class="delivery-options">
+                            <label class="delivery-option">
+                                <input type="radio" name="delivery" value="pickup" checked>
+                                <div class="option-content">
+                                    <i class="fas fa-store"></i>
+                                    <div>
+                                        <strong>Самовывоз</strong>
+                                        <p>Бесплатно • п. Белиджи</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="delivery-option">
+                                <input type="radio" name="delivery" value="delivery">
+                                <div class="option-content">
+                                    <i class="fas fa-truck"></i>
+                                    <div>
+                                        <strong>Доставка</strong>
+                                        <p>от 500 ₽ • По городу</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group" id="addressField" style="display: none;">
+                            <label for="address">Адрес доставки</label>
+                            <textarea id="address" name="address" rows="3" 
+                                      class="form-control" placeholder="Улица, дом, квартира"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-section">
+                        <h3><i class="fas fa-wallet"></i> Способ оплаты</h3>
+                        
+                        <div class="payment-options">
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="cash" checked>
+                                <div class="option-content">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <div>
+                                        <strong>Наличные</strong>
+                                        <p>При получении товара</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="payment-option disabled">
+                                <input type="radio" name="payment" value="card" disabled>
+                                <div class="option-content">
+                                    <i class="fas fa-credit-card"></i>
+                                    <div>
+                                        <strong>Карта</strong>
+                                        <p class="text-muted">Временно недоступно (частые отключения интернета)</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Важно:</strong> В связи с частыми отключениями интернета в Дагестане, 
+                            онлайн-оплата временно недоступна. Приносим извинения за неудобства!
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-section">
+                        <h3><i class="fas fa-comment"></i> Комментарий к заказу</h3>
+                        <div class="form-group">
+                            <textarea name="comment" rows="3" class="form-control" 
+                                      placeholder="Дополнительная информация..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">
+                        <i class="fas fa-check-circle"></i> Подтвердить заказ
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Заказ -->
+            <div class="checkout-summary">
+                <h3>Ваш заказ</h3>
+                
+                <div class="order-items">
+                    {% for item in items %}
+                    <div class="order-item">
+                        <div class="order-item-info">
+                            <h4>{{ item.product.name }}</h4>
+                            <p>{{ item.quantity }} шт. × {{ item.product.price }} ₽</p>
+                        </div>
+                        <span class="order-item-total">{{ item.item_total }} ₽</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-total">
+                    <div class="total-row">
+                        <span>Товары:</span>
+                        <span>{{ total }} ₽</span>
+                    </div>
+                    <div class="total-row delivery-cost">
+                        <span>Доставка:</span>
+                        <span>0 ₽</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>Итого:</span>
+                        <span><strong>{{ total }} ₽</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Поле адреса при выборе доставки
+document.querySelectorAll('input[name="delivery"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const addressField = document.getElementById('addressField');
+        if (this.value === 'delivery') {
+            addressField.style.display = 'block';
+        } else {
+            addressField.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

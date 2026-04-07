@@ -1,0 +1,138 @@
+/* ===== ПОИСК И ФИЛЬТРЫ ===== */
+
+.search-section {
+    background: var(--white);
+    padding: var(--spacing-xl) 0;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-bottom: 50px;
+}
+
+/* Поле поиска */
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.search-input-wrapper i {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray);
+    font-size: var(--font-size-lg);
+    pointer-events: none;
+    transition: var(--transition);
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 50px;
+    border: 2px solid var(--gray-light);
+    border-radius: 50px;
+    font-size: var(--font-size-md);
+    background: var(--light);
+    transition: var(--transition);
+}
+
+.search-input-wrapper input:focus {
+    border-color: var(--primary);
+    background: var(--white);
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
+}
+
+.search-input-wrapper input:focus + i {
+    color: var(--primary);
+}
+
+/* Фильтры */
+.filters {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 2px solid var(--gray-light);
+    border-radius: 50px;
+    font-size: var(--font-size-sm);
+    background: var(--white);
+    min-width: 180px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+}
+
+.filter-select:hover {
+    border-color: var(--primary-light);
+}
+
+.checkbox-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: var(--secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--light);
+    border-radius: 50px;
+    transition: var(--transition);
+}
+
+.checkbox-filter:hover {
+    background: var(--gray-light);
+}
+
+.checkbox-filter input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+/* Кнопка фильтра */
+.filters .btn {
+    padding: var(--spacing-sm) var(--spacing-xl);
+    border-radius: 50px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* Адаптив поиска */
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-select,
+    .checkbox-filter,
+    .filters .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .search-input-wrapper {
+        max-width: 100%;
+    }
+}

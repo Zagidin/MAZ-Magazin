@@ -1,0 +1,107 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Контакты - MZSH{% endblock %}
+
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/pages/contacts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="contacts-page">
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-address-book"></i> Наши контакты</h1>
+
+        <div class="contacts-grid">
+            <!-- Левая колонка: Инфо -->
+            <div class="info-column">
+                <div class="info-card">
+                    <h3><i class="fas fa-store"></i> Магазин «MZSH»</h3>
+                    
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="info-text">
+                            <strong>Адрес:</strong>
+                            <p>Республика Дагестан, <a style="color: #7a7af8" href="https://yandex.com/maps/-/CPfNAHMD" target="_blank"> 🌐 Ссылка на адрес 👈</a><br>(ориентир: заправка Промгаз Экто)</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                        <div class="info-text">
+                            <strong>Телефон:</strong>
+                            <p><a href="tel:+79285480146">+7 (928) 548-01-46</a></p>
+                            <p><a href="tel:+79993103042">+7 (999) 310-30-42</a></p>
+                            <p style="font-size: 13px; margin-top: 5px;">Звоните с 9:00 до 18:00</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="info-text">
+                            <strong>Email:</strong>
+                            <p><a href="mailto:info@mzsh.ru">info@mzsh.ru</a></p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-user-tie"></i></div>
+                        <div class="info-text">
+                            <strong>Директор:</strong>
+                            <p>Магамедрагимов Шалбуз Загидинович</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-user-tie"></i></div>
+                        <div class="info-text">
+                            <strong>Разработчик:</strong>
+                            <p>Магамедрагимов Загидин Шалбузович</p>
+                        </div>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
+
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">Мы в мессенджерах:</h4>
+                    <div class="messengers-list">
+                        <!-- Замени ссылки на свои реальные -->
+                        <a href="https://t.me/Zag_05" target="_blank" class="messenger-btn btn-tg">
+                            <i class="fab fa-telegram-plane"></i> Telegram
+                        </a>
+                        <a href="https://wa.me/79993103042" target="_blank" class="messenger-btn btn-wa">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
+                        <a href="mailto:info@mzsh.ru" class="messenger-btn btn-email">
+                            <i class="fas fa-envelope"></i> Gmail
+                        </a>
+                        <a href="https://max.ru/?ysclid=mnma6smacf952702234" target="_blank" class="messenger-btn btn-max">
+                            <i class="fas fa-comment-dots"></i> MAX
+                        </a>
+                    </div>
+
+                    <div class="work-hours">
+                        <p><strong>🕒 Режим работы:</strong></p>
+                        <p>Пн-Пт: 09:00 - 18:00</p>
+                        <p>Сб: 10:00 - 15:00</p>
+                        <p>Вс: Выходной</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка: Карта -->
+            <div class="map-column">
+                <div class="map-card">
+                    <iframe src="https://yandex.ru/map-widget/v1/?um=constructor%3A0&amp;source=constructor" width="100%" height="400" frameborder="0" class="map-frame"></iframe>
+                    
+                    <!-- Если нет виджета, просто ссылка на карту -->
+                    <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; text-align: center;">
+                        <a href="https://yandex.com/maps/?ll=48.386065%2C41.819993&mode=search&sctx=ZAAAAAgCEAAaKAoSCXoAi%2Fz6kRNAET49tmXAL0pAEhIJzcth9x3Dzz8R%2B1jBb0OMuz8iBgABAgMEBSgKOABAhogGSAFqAnJ1nQHNzMw9oAEAqAEAvQE2HL%2BGggIn0JHQtdC70LjQtNC20Lgg0LDQstGC0L7Qt9Cw0L%2FRh9Cw0YHRgtC4igIdMTg0MTA1MzIwJDE4NDEwNTI5MCQxODQxMDUzMTSSAgYxMDE4MTmaAgxkZXNrdG9wLW1hcHOqAgwxNzg1MzEyMDYxMjI%3D&sll=48.386065%2C41.819993&sspn=0.002439%2C0.001049&text=%D0%91%D0%B5%D0%BB%D0%B8%D0%B4%D0%B6%D0%B8%20%D0%B0%D0%B2%D1%82%D0%BE%D0%B7%D0%B0%D0%BF%D1%87%D0%B0%D1%81%D1%82%D0%B8&whatshere%5Bpoint%5D=48.385688%2C41.820070&whatshere%5Bzoom%5D=17&z=20.04" target="_blank" class="btn btn-primary" style="background: #ff6b00; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                            <i class="fas fa-location-arrow"></i> Построить маршрут
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

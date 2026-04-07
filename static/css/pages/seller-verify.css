@@ -1,0 +1,33 @@
+.verify-page {
+    padding: var(--spacing-xxl) 0;
+    min-height: 70vh;
+}
+
+.verify-form {
+    background: var(--white);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.verify-result {
+    max-width: 520px;
+    margin: var(--spacing-xl) auto 0;
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.verify-result.success {
+    background: var(--success-light);
+    color: var(--success);
+    border: 2px solid var(--success);
+}
+
+.verify-result.error {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 2px solid var(--danger);
+}

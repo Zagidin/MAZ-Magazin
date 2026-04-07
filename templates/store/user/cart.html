@@ -1,0 +1,104 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Корзина - MZSH{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-shopping-cart"></i> Корзина</h1>
+
+        {% if items %}
+        <div class="cart-wrapper">
+            <!-- Список товаров -->
+            <div class="cart-items-list">
+                {% for item in items %}
+                <div class="cart-item" id="cart-item-{{ item.product.id }}">
+                    <div class="cart-item-image">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                        {% else %}
+                            <img src="{% static 'img/no-image.png' %}" alt="{{ item.product.name }}">
+                        {% endif %}
+                    </div>
+
+                    <div class="cart-item-info">
+                        <h3>{{ item.product.name }}</h3>
+                        <p class="article">Артикул: {{ item.product.article }}</p>
+                        <p class="price">{{ item.product.price }} ₽/шт</p>
+                    </div>
+
+                    <div class="cart-item-quantity">
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="updateQuantity({{ item.product.id }}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="qty-input-{{ item.product.id }}"
+                                   value="{{ item.quantity }}" min="1" max="{{ item.product.quantity }}"
+                                   onchange="updateQuantity({{ item.product.id }}, 0, this.value)">
+                            <button class="qty-btn" onclick="updateQuantity({{ item.product.id }}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <p class="stock">Доступно: {{ item.product.quantity }} шт.</p>
+                    </div>
+
+                    <div class="cart-item-total">
+                        <span class="item-total" id="item-total-{{ item.product.id }}">{{ item.item_total }} ₽</span>
+                        <button class="btn-remove" onclick="removeFromCart({{ item.product.id }})" title="Удалить">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Итого -->
+            <div class="cart-summary">
+                <h3>Итого</h3>
+                <div class="summary-row">
+                    <span>Товаров:</span>
+                    <span id="summary-count">{{ items|length }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Сумма:</span>
+                    <span><strong id="summary-total">{{ total }} ₽</strong></span>
+                </div>
+                <div class="summary-row total">
+                    <span>К оплате:</span>
+                    <span><strong id="final-total">{{ total }} ₽</strong></span>
+                </div>
+
+                <a href="{% url 'store:checkout' %}" class="btn btn-primary btn-block btn-lg" style="margin-top: 20px;">
+                    <i class="fas fa-credit-card"></i> Оформить заказ
+                </a>
+
+                <div class="payment-info">
+                    <p><i class="fas fa-money-bill-wave"></i> Оплата при получении</p>
+                    <p><i class="fas fa-truck"></i> Самовывоз из магазина</p>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="cart-empty">
+            <i class="fas fa-shopping-cart"></i>
+            <h2>Ваша корзина пуста</h2>
+            <p>Добавьте товары из каталога</p>
+            <a href="{% url 'store:catalog' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-search"></i> Перейти к покупкам
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/pages/cart-page.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pages/cart-page.js' %}"></script>
+{% endblock %}

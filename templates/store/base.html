@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MZSH - Магазин запчастей спецтехники{% endblock %}</title>
+
+    <link rel="icon" href="{% static 'img/my_photo_service/IconMZSH.ico' %}" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'img/my_photo_service/IconMZSH.ico' %}" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/my_photo_service/IconMZSH_Apple.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-cogs"></i>
+                    <span>MZSH</span>
+                </div>
+                <div class="logo-text">
+                    <h1>Магазин запчастей</h1>
+                    <p>Магамедрагимов Шалбуз Загидинович</p>
+                </div>
+            </div>
+
+            <div class="auth-section">
+                {% if user.is_authenticated %}
+                    <span class="user-name">
+                        <i class="fas fa-user"></i> {{ user.username }}
+                    </span>
+
+                    {% if user.is_staff %}
+                        <a href="{% url 'admin:index' %}" class="btn btn-outline">
+                            <i class="fas fa-cog"></i> Админка
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'store:logout' %}" class="btn btn-primary">
+                        <i class="fas fa-sign-out-alt"></i> Выход
+                    </a>
+                {% else %}
+                    <a href="{% url 'store:login' %}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Вход
+                    </a>
+                    <a href="{% url 'store:register' %}" class="btn btn-outline">
+                        <i class="fas fa-user-plus"></i> Регистрация
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <nav class="main-nav">
+            <ul>
+                <li>
+                    <a href="{% url 'store:index' %}">
+                        <i class="fas fa-home"></i> Главная
+                    </a>
+                </li>
+
+                {% if user.is_staff %}
+                    <li>
+                        <a href="{% url 'store:seller_dashboard' %}">
+                            <i class="fas fa-cash-register"></i> Продавец
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if user.is_authenticated and not user.is_staff %}
+                    <li>
+                        <a href="{% url 'store:my_orders' %}">
+                            <i class="fas fa-boxes"></i> Мои заказы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'store:cart' %}">
+                            <i class="fas fa-shopping-cart"></i> Корзина
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li>
+                    <a href="{% url 'store:catalog' %}?equipment=Камаз">
+                        <i class="fas fa-truck-monster"></i> КАМАЗ
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'store:catalog' %}?equipment=Трактор">
+                        <i class="fas fa-tractor"></i> Трактор
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'store:catalog' %}">
+                        <i class="fas fa-list"></i> Все запчасти
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'store:contacts' %}">
+                        <i class="fas fa-phone"></i> Контакты
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    {% if not user.is_staff %}
+        <button class="floating-cart" id="floatingCartBtn" type="button">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-count">{{ cart_count|default:0 }}</span>
+        </button>
+    {% endif %}
+
+    <aside class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-cart"></i> Корзина</h3>
+            <button id="closeCartSidebarBtn" class="close-btn" type="button">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="cart-items" id="cartItems">
+            <p class="empty-cart">Корзина пуста</p>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Итого:</span>
+                <strong id="cartTotal">0 ₽</strong>
+            </div>
+            <a href="{% url 'store:checkout' %}" class="btn btn-primary btn-block">
+                Оформить заказ
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <i class="fas fa-cogs"> MZSH</i>
+                </div>
+                <p>Магазин запчастей спецтехники</p>
+                <p>Директор: Магамедрагимов Шалбуз Загидинович</p>
+                <p>Разработчик: Магамедрагимов Загидин Шалбузович</p>
+                <p><i class="fas fa-map-marker-alt"></i> Республика Дагестан, <a style="color: #7a7af8" href="https://yandex.com/maps/-/CPfNAHMD"> 🌐 Ссылка на адрес 👈</a></p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Контакты</h4>
+                <p><i class="fas fa-phone"></i> +7 (999) 310-30-42</p>
+                <p><i class="fas fa-envelope"></i> info@mzsh.ru</p>
+                <p><i class="fas fa-clock"></i> Пн-Пт: 9:00 - 18:00</p>
+                <p><i class="fas fa-clock"></i> Сб: 9:00 - 14:00</p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Мы на карте</h4>
+                <div class="map-container">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1403.245890954263!2d48.38420514147194!3d41.82023357999859!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4049d36ba571cc47%3A0x4f0e9e01d997ecf5!2z0J_RgNC-0LzQs9Cw0Lc!5e0!3m2!1sru!2sus!4v1775342650777!5m2!1sru!2sus" referrerpolicy="no-referrer-when-downgrade"
+                            width="100%" height="200" style="border:0; border-radius: 8px;" allowfullscreen="" loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 MZSH. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

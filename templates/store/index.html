@@ -1,0 +1,219 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Главная - MZSH{% endblock %}
+
+{% block content %}
+    <!-- Hero секция -->
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>Запчасти для спецтехники</h1>
+            <p>КАМАЗ • Тракторы • Экскаваторы • МАЗ</p>
+            <div class="hero-buttons">
+                <a href="{% url 'store:catalog' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search"></i> Каталог запчастей
+                </a>
+                <a href="{% url 'store:contacts' %}" class="btn btn-outline btn-lg">
+                    <i class="fas fa-phone"></i> Связаться с нами
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Поиск и фильтры -->
+    <section class="search-section">
+        <div class="container">
+            <form class="search-form" action="{% url 'store:catalog' %}" method="get">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="q" placeholder="Поиск по артикулу или названию..." value="{{ query }}">
+                </div>
+                <div class="filters">
+                    <select name="category" class="filter-select">
+                        <option value="">Все категории</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if category_id == cat.id %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <select name="equipment" class="filter-select">
+                        <option value="">Вся техника</option>
+                        {% for eq in equipment_types %}
+                            <option value="{{ eq.name }}" {% if equipment == eq.name %}selected{% endif %}>
+                                {{ eq.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <label class="checkbox-filter">
+                        <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}>
+                        <span>В наличии</span>
+                    </label>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Применить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Товары -->
+    <section class="products-section">
+        <div class="container">
+            <h2 class="section-title">Популярные запчасти</h2>
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="product-card" onclick="openProductModal({{ product.id }})">
+                    <div class="product-image">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{% static 'img/no-image.png' %}" alt="{{ product.name }}">
+                        {% endif %}
+                        {% if product.quantity == 0 %}
+                            <span class="badge out-of-stock">Нет в наличии</span>
+                        {% elif product.quantity < 5 %}
+                            <span class="badge low-stock">Осталось {{ product.quantity }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <h3>{{ product.name }}</h3>
+                        <p class="article">Артикул: {{ product.article }}</p>
+                        <p class="category">{{ product.category.name }}</p>
+                        <div class="product-footer">
+                            <span class="price">{{ product.price }} ₽</span>
+                            {% if not user.is_staff %}
+                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); addToCart({{ product.id }})">
+                                    <i class="fas fa-cart-plus"></i> В корзину
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="no-products">
+                    <i class="fas fa-box-open"></i>
+                    <p>Товары не найдены</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Модальное окно товара -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeProductModal()">&times;</span>
+            <div id="productModalContent"></div>
+        </div>
+    </div>
+
+    <!-- 🔗 МОИ ЗАКАЗЫ (Ozon/WB стиль) - только для авторизованных -->
+    {% if last_order %}
+    <section class="my-orders-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-box"></i> Ваш последний заказ</h2>
+                <a href="{% url 'store:catalog' %}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-shopping-cart"></i> Ещё покупки
+                </a>
+            </div>
+
+            <div class="order-card-wb">
+                <!-- Шапка -->
+                <div class="order-card-header">
+                    <div class="order-id">
+                        <strong>Заказ №{{ last_order.uuid.hex|slice:":8" }}</strong>
+                        <span class="order-date">{{ last_order.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <span class="order-status-badge status-{{ last_order.status }}">
+                        {{ last_order.get_status_display }}
+                    </span>
+                </div>
+
+                <!-- Таймлайн -->
+                <div class="order-timeline-wb">
+                    <div class="timeline-item {% if last_order.status != 'cancelled' %}done{% endif %}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-text">
+                            <span class="timeline-label">Принят</span>
+                            <small>{{ last_order.created_at|date:"H:i" }}</small>
+                        </div>
+                    </div>
+                    <div class="timeline-line {% if last_order.status == 'packed' or last_order.status == 'given' %}done{% endif %}"></div>
+                    <div class="timeline-item {% if last_order.status == 'packed' or last_order.status == 'given' %}done{% endif %}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-text">
+                            <span class="timeline-label">Собран</span>
+                            {% if last_order.status == 'packed' or last_order.status == 'given' %}<small>✓</small>{% endif %}
+                        </div>
+                    </div>
+                    <div class="timeline-line {% if last_order.status == 'given' %}done{% endif %}"></div>
+                    <div class="timeline-item {% if last_order.status == 'given' %}done{% endif %}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-text">
+                            <span class="timeline-label">Выдан</span>
+                            {% if last_order.status == 'given' %}<small>✓</small>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Футер -->
+                <div class="order-card-footer">
+                    <div class="order-summary">
+                        <span class="order-total"><strong>{{ last_order.total }} ₽</strong></span>
+                        <span class="order-items-count">{{ last_order.items.count }} товар{{ last_order.items.count|pluralize:"а,ов" }}</span>
+                    </div>
+                    <div class="order-actions">
+                        <button class="btn-qr" onclick="openQrModal('{{ last_order.uuid }}')" title="Показать QR">
+                            <i class="fas fa-qrcode"></i>
+                        </button>
+                        <a href="{% url 'store:order_detail' last_order.uuid %}" class="btn btn-sm btn-outline">
+                            Подробнее
+                        </a>
+
+                        <a href="{% url 'store:my_orders' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-list"></i> Все заказы
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- QR Модалка (та же самая) -->
+    <div id="qrModal" class="qr-modal" style="display: none;">
+        <div class="qr-modal-content">
+            <button class="qr-modal-close" onclick="closeQrModal()"><i class="fas fa-times"></i></button>
+            <div class="qr-modal-header">
+                <h3>QR-код для получения</h3>
+                <p>Покажите этот код продавцу</p>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-large">
+                    <img id="qrModalImage" src="" alt="QR заказа">
+                </div>
+                <div class="qr-info">
+                    <p><strong>Заказ:</strong> <span id="qrModalOrderNum"></span></p>
+                    <p><strong>Сумма:</strong> <span id="qrModalTotal"></span></p>
+                </div>
+            </div>
+            <div class="qr-modal-footer">
+                <button class="btn btn-primary" onclick="closeQrModal()">
+                    <i class="fas fa-check"></i> Понятно
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/pages/home.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pages/home.js' %}"></script>
+{% endblock %}

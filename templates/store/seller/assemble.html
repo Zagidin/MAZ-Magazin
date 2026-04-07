@@ -1,0 +1,70 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}🔧 Сборка заказа №{{ order.uuid.hex|slice:":8" }}{% endblock %}
+
+{% block content %}
+<!-- 🔥 Передаём UUID в JS - ЭТО КРИТИЧНО -->
+<script>
+    window.ORDER_UUID = "{{ order.uuid }}";
+</script>
+
+<div class="assemble-page">
+    <div class="container">
+        <div class="assemble-header">
+            <h1>📦 Сборка заказа №{{ order.uuid.hex|slice:":8" }}</h1>
+            <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+            <a href="{% url 'store:seller_dashboard' %}" class="btn btn-outline btn-sm">← Назад</a>
+        </div>
+
+        <div class="order-info-card">
+            <p><strong>Клиент:</strong> {{ order.client.last_name }} {{ order.client.first_name }}</p>
+            <p><strong>Телефон:</strong> {{ order.client.phone }}</p>
+            <p><strong>Сумма:</strong> {{ order.total }} ₽</p>
+        </div>
+
+        <div class="scanner-section">
+            <h3><i class="fas fa-barcode"></i> Сканировать артикул</h3>
+            <div class="scanner-input-wrapper">
+                <input type="text" id="articleInput" class="form-control" placeholder="Отсканируйте артикул..." autofocus>
+                <button onclick="scanArticle()" class="btn btn-primary"><i class="fas fa-search"></i> Найти</button>
+            </div>
+        </div>
+
+        <div id="scanResult" class="scan-result" style="display: none;"></div>
+
+        {% if expected_items %}
+        <div class="expected-items">
+            <h3><i class="fas fa-list-check"></i> Товары в заказе</h3>
+            <div class="expected-list">
+                {% for item in expected_items %}
+                <div class="expected-item">
+                    <div class="item-image">
+                        {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="">{% else %}<div class="no-image">📦</div>{% endif %}
+                    </div>
+                    <div class="item-info">
+                        <strong>{{ item.product.name }}</strong>
+                        <p class="article">{{ item.product.article }}</p>
+                    </div>
+                    <div class="item-qty"><span class="qty-value">{{ item.quantity }} шт.</span></div>
+                    <button class="btn btn-sm btn-success" onclick="quickAdd({{ item.product.id }}, {{ item.quantity }})">✓ Добавить</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="btn btn-primary btn-block" onclick="finishAssembly()">🎯 Завершить сборку</button>
+        </div>
+        {% endif %}
+
+        <div class="assembled-items">
+            <h3><i class="fas fa-check-circle"></i> Добавлено</h3>
+            <div id="assembledContainer"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.assemble-page{padding:20px 0;min-height:80vh}.assemble-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:10px}.order-status{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600}.order-status.status-new{background:#e3f2fd;color:#1976d2}.order-status.status-packed{background:#e8f5e9;color:#388e3c}.order-info-card{background:#fff;padding:15px 20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:25px}.scanner-section{background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:25px}.scanner-input-wrapper{display:flex;gap:10px}.scanner-input-wrapper .form-control{flex:1;padding:12px;border:2px solid #ddd;border-radius:8px}.scan-result{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:25px}.scan-result.success{border-left:4px solid #27ae60}.scan-result.error{border-left:4px solid #e74c3c}.scan-result-content{padding:25px;display:flex;gap:25px;align-items:flex-start}.scan-result-image{width:200px;height:200px;border-radius:10px;overflow:hidden;background:#f8f9fa;flex-shrink:0}.scan-result-image img{width:100%;height:100%;object-fit:cover}.scan-result-info{flex:1}.scan-result-info h3{margin:0 0 10px 0;color:#2c3e50}.scan-result-info .article{font-size:14px;color:#7f8c8d;margin:5px 0}.scan-result-actions{display:flex;gap:10px;margin-top:15px}.expected-items{background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:25px}.expected-list{display:flex;flex-direction:column;gap:10px}.expected-item{display:flex;align-items:center;gap:15px;padding:15px;background:#f8f9fa;border-radius:10px}.expected-item .item-image{width:80px;height:80px;border-radius:8px;overflow:hidden;background:#fff;flex-shrink:0}.expected-item .item-image img{width:100%;height:100%;object-fit:cover}.expected-item .item-info{flex:1}.expected-item .item-info strong{display:block;margin-bottom:5px}.expected-item .item-qty{text-align:center}.expected-item .qty-value{font-size:18px;font-weight:700}.assembled-items{background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}.assembled-item{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#e8f5e9;border-radius:8px;margin-bottom:8px}.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:500;font-size:14px;cursor:pointer;border:none}.btn-sm{padding:6px 14px;font-size:13px}.btn-success{background:#27ae60;color:#fff}.btn-success:disabled{background:#95a5a6;cursor:not-allowed}.btn-primary{background:#ff6b00;color:#fff}.btn-outline{background:transparent;border:2px solid #ff6b00;color:#ff6b00}.btn-block{display:block;width:100%;justify-content:center}@media(max-width:768px){.scanner-input-wrapper{flex-direction:column}.scan-result-content{flex-direction:column;align-items:center;text-align:center}.scan-result-image{width:100%;height:250px}.expected-item{flex-direction:column;align-items:flex-start}}
+</style>
+
+<script src="{% static 'js/pages/seller-assemble.js' %}"></script>
+{% endblock %}

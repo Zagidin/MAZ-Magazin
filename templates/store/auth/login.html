@@ -1,0 +1,69 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Вход - MZSH{% endblock %}
+
+{% block content %}
+
+<div class="auth-container">
+    <div class="auth-box">
+        <div class="auth-header">
+            <i class="fas fa-sign-in-alt"></i>
+            <h2>Вход в систему</h2>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                Неправильный логин или пароль
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Логин
+                </label>
+                <input type="text" id="username" name="username" required
+                       class="form-control" placeholder="Введите логин">
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Пароль
+                </label>
+                <input type="password" id="password" name="password" required
+                       class="form-control" placeholder="Введите пароль">
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="remember">
+                    <span>Запомнить меня</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </button>
+        </form>
+
+        <!-- Блок безопасности вместо "в разработке" -->
+        <div class="security-note">
+            <i class="fas fa-shield-alt"></i>
+            <strong>Важно:</strong> Пожалуйста, запомните ваш пароль.
+            В целях безопасности автоматическое восстановление пароля через email отключено
+            (требуется настройка SMTP-сервера).
+            При утере пароля обратитесь к администратору системы.
+        </div>
+
+        <div class="auth-footer">
+            <p>Нет аккаунта? <a href="{% url 'store:register' %}">Зарегистрироваться</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/auth.css' %}">{% endblock %}

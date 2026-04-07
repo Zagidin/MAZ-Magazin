@@ -1,0 +1,183 @@
+/* ===== СТАТУСЫ ЗАКАЗОВ ===== */
+
+.orders-status {
+    padding: var(--spacing-xl) 0;
+    background: var(--white);
+}
+
+.orders-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.order-card {
+    background: var(--light);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    border-left: 4px solid var(--primary);
+    transition: var(--transition);
+}
+
+.order-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(5px);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.order-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    color: var(--secondary);
+}
+
+.order-date {
+    font-size: var(--font-size-sm);
+    color: var(--gray);
+    background: var(--white);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: 20px;
+}
+
+/* Таймлайн */
+.order-timeline {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    position: relative;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--border-radius-circle);
+    background: var(--gray-light);
+    border: 3px solid var(--white);
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    position: relative;
+}
+
+.step-circle::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--gray);
+    border-radius: var(--border-radius-circle);
+    transition: var(--transition);
+}
+
+.timeline-step.completed .step-circle {
+    background: var(--success);
+}
+
+.timeline-step.completed .step-circle::after {
+    background: var(--white);
+}
+
+.timeline-step p {
+    font-size: var(--font-size-xs);
+    color: var(--gray);
+    margin: 0;
+    text-align: center;
+    max-width: 80px;
+}
+
+.timeline-step.completed p {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.timeline-line {
+    flex: 1;
+    height: 3px;
+    background: var(--gray-light);
+    margin: 0 var(--spacing-xs);
+    position: relative;
+    top: -15px;
+}
+
+.timeline-line.completed {
+    background: var(--success);
+}
+
+/* Итого заказа */
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--gray-light);
+}
+
+.order-total span {
+    font-size: var(--font-size-md);
+}
+
+.order-total strong {
+    color: var(--primary);
+    font-size: var(--font-size-lg);
+}
+
+.no-orders {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--gray);
+    background: var(--light);
+    border-radius: var(--border-radius-lg);
+}
+
+.no-orders i {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.3;
+}
+
+/* Адаптив заказов */
+@media (max-width: 768px) {
+    .order-timeline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .timeline-line {
+        width: 3px;
+        height: 30px;
+        margin: 0;
+        top: 0;
+        left: 17px;
+    }
+
+    .timeline-step {
+        flex-direction: row;
+        gap: var(--spacing-md);
+        width: 100%;
+    }
+
+    .timeline-step p {
+        text-align: left;
+        max-width: none;
+    }
+}

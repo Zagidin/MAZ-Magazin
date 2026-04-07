@@ -1,0 +1,74 @@
+.my-orders-section {
+    padding: 40px 0;
+    background: #f9f9f9;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.order-card-wb {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.order-card-header,
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.order-card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.order-card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+
+.order-timeline-wb {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+}
+
+.timeline-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.timeline-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ddd;
+    border: 3px solid #fff;
+    margin-bottom: 8px;
+}
+
+.timeline-item.done .timeline-dot,
+.timeline-line.done {
+    background: var(--success);
+}
+
+.timeline-line {
+    flex: 1;
+    height: 3px;
+    background: #eee;
+    margin: 0 10px;
+}

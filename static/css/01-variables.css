@@ -1,0 +1,119 @@
+/* ===== ПЕРЕМЕННЫЕ И СБРОС ===== */
+
+:root {
+    /* 🔶 Основные цвета (спецтехника) */
+    --primary: #ff6b00;
+    --primary-dark: #e65100;
+    --primary-light: #ff9e4d;
+
+    /* 🔷 Вторичные цвета */
+    --secondary: #264b5d;
+    --secondary-dark: #1a252f;
+    --secondary-light: #34495e;
+
+    /* ⚪ Нейтральные */
+    --white: #ffffff;
+    --light: #f8f9fa;
+    --light-bg: #f5f5f5;
+    --gray: #6c757d;
+    --gray-light: #dee2e6;
+    --dark: #343a40;
+    --dark-bg: #1a1a1a;
+
+    /* 🎨 Семантические цвета */
+    --success: #27ae60;
+    --success-light: #d4edda;
+    --warning: #f39c12;
+    --warning-light: #fff3cd;
+    --danger: #e74c3c;
+    --danger-light: #f8d7da;
+    --info: #3498db;
+    --info-light: #d1ecf1;
+
+    /* 📐 Отступы и размеры */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+
+    /* 🎯 Границы и тени */
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-circle: 50%;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.2);
+    --shadow-hover: 0 12px 32px rgba(0,0,0,0.25);
+
+    /* ⚡ Анимации */
+    --transition: all 0.3s ease;
+    --transition-fast: all 0.15s ease;
+    --transition-slow: all 0.5s ease;
+
+    /* 🔤 Типографика */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-monospace: 'Consolas', 'Monaco', monospace;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-xxl: 2rem;
+    --font-size-xxxl: 3rem;
+
+    /* 📱 Брейкпоинты */
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+}
+
+/* Сброс стилей */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    color: var(--dark);
+    background-color: var(--light-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Сброс для ссылок и кнопок */
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Убираем стандартные стили инпутов */
+input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+}

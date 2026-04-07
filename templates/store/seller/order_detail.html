@@ -1,0 +1,719 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}🛠️ Заказ №{{ order.uuid.hex|slice:":8" }} - Панель продавца{% endblock %}
+
+{% block content %}
+<div class="seller-order-detail">
+    <div class="container">
+        <!-- Заголовок с действиями -->
+        <div class="order-header">
+            <div>
+                <h1>Заказ №{{ order.uuid.hex|slice:":8" }}</h1>
+                <p style="color: #7f8c8d; margin: 5px 0 0;">
+                    <i class="fas fa-clock"></i> {{ order.created_at|date:"d.m.Y H:i" }}
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <span class="order-status status-{{ order.status }}">
+                    {{ order.get_status_display }}
+                </span>
+
+                <!-- Кнопки действий для продавца -->
+                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                    {% if order.status == 'new' %}
+                    <a href="{% url 'store:seller_pack_order' order.uuid %}" class="btn btn-success">
+                        <i class="fas fa-box"></i> Собрать заказ
+                    </a>
+                    {% endif %}
+
+                    {% if order.status == 'packed' %}
+                    <a href="{% url 'store:seller_print_qr' order.packages.first.uuid %}"
+                       target="_blank" class="btn btn-outline">
+                        <i class="fas fa-print"></i> Печать QR
+                    </a>
+                    <button onclick="openVerifyModal('{{ order.uuid }}', '{{ order.packages.first.uuid }}')"
+                            class="btn btn-primary">
+                        <i class="fas fa-qrcode"></i> Выдать товар
+                    </button>
+                    {% endif %}
+
+                    {% if order.status == 'given' %}
+                    <span style="color: #27ae60; font-weight: 600;">
+                        <i class="fas fa-check-circle"></i> Заказ выдан
+                    </span>
+                    {% endif %}
+
+                    <a href="{% url 'store:seller_dashboard' %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Инфо о клиенте и заказе -->
+        <div class="order-info-grid">
+            <div class="info-card">
+                <h3><i class="fas fa-user"></i> Клиент</h3>
+                <p><strong>{{ order.client.last_name }} {{ order.client.first_name }} {{ order.client.patronymic }}</strong></p>
+                <p><i class="fas fa-phone"></i> <a href="tel:{{ order.client.phone }}">{{ order.client.phone }}</a></p>
+                {% if order.client.email %}
+                <p><i class="fas fa-envelope"></i> {{ order.client.email }}</p>
+                {% endif %}
+                <p style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                    GUID: <code>{{ order.client.guid_1c|truncatechars:12 }}</code>
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-info-circle"></i> Информация</h3>
+                <p><strong>Создан:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+                <p><strong>Статус:</strong> {{ order.get_status_display }}</p>
+                {% if order.given_at %}
+                <p><strong>Выдан:</strong> {{ order.given_at|date:"d.m.Y H:i" }}</p>
+                {% endif %}
+                <p style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                    UUID: <code>{{ order.uuid }}</code><br>
+                    GUID 1C: <code>{{ order.guid_1c|truncatechars:12 }}</code>
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-ruble-sign"></i> Сумма</h3>
+                <p style="font-size: 32px; font-weight: 700; color: #ff6b00; margin: 10px 0;">
+                    {{ order.total }} ₽
+                </p>
+                <p style="font-size: 14px; color: #7f8c8d;">
+                    Товаров: {{ order.items.count }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Состав заказа -->
+        <div class="order-items">
+            <h3><i class="fas fa-list"></i> Состав заказа</h3>
+            <div style="overflow-x: auto;">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Артикул</th>
+                            <th>Категория</th>
+                            <th>Цена</th>
+                            <th>Кол-во</th>
+                            <th>Сумма</th>
+                            <th>GUID 1C</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.product.name }}</strong>
+                                {% if item.product.image %}
+                                <br><img src="{{ item.product.image.url }}" alt=""
+                                         style="height: 40px; margin-top: 5px; border-radius: 4px; object-fit: cover;">
+                                {% endif %}
+                            </td>
+                            <td><code>{{ item.product.article }}</code></td>
+                            <td>{{ item.product.category.name }}</td>
+                            <td>{{ item.price }} ₽</td>
+                            <td>{{ item.quantity }} шт.</td>
+                            <td><strong>{{ item.price|floatformat:0 }} × {{ item.quantity }} = {{ item.price|floatformat:0|add:"0" }} ₽</strong></td>
+                            <td style="font-size: 11px;"><code>{{ item.guid_1c|truncatechars:10 }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" style="text-align: right; padding: 20px 15px; border-top: 2px solid #eee;"><strong>Итого:</strong></td>
+                            <td colspan="2" style="padding: 20px 15px; border-top: 2px solid #eee;">
+                                <strong style="font-size: 20px; color: #ff6b00;">{{ order.total }} ₽</strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Управление пакетами -->
+        <div class="packages-section">
+            <h3><i class="fas fa-boxes"></i> Упаковки</h3>
+
+            {% if order.packages.all %}
+                {% for package in order.packages.all %}
+                <div class="package-card">
+                    <div class="package-info">
+                        <strong>Пакет #{{ forloop.counter }}</strong>
+                        <p style="font-size: 13px; color: #7f8c8d;">
+                            UUID: <code>{{ package.uuid }}</code>
+                        </p>
+                        <p style="font-size: 13px; color: #7f8c8d;">
+                            Напечатан: {{ package.is_printed|yesno:"✅ Да,❌ Нет" }}
+                        </p>
+                    </div>
+                    <div class="package-actions">
+                        <a href="{% url 'store:seller_print_qr' package.uuid %}"
+                           target="_blank" class="btn btn-sm btn-outline">
+                            <i class="fas fa-print"></i> Печать QR
+                        </a>
+                        <button onclick="copyToClipboard('{{ package.uuid }}')" class="btn btn-sm btn-outline">
+                            <i class="fas fa-copy"></i> Копировать UUID
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-packages">
+                    <i class="fas fa-box-open" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+                    <p>Упаковки не созданы</p>
+                    {% if order.status == 'new' %}
+                    <a href="{% url 'store:seller_pack_order' order.uuid %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Создать упаковку
+                    </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- QR для проверки (визуализация) -->
+        {% if order.status == 'packed' or order.status == 'given' %}
+        <div class="qr-preview">
+            <h3><i class="fas fa-qrcode"></i> QR-код заказа (для клиента)</h3>
+            <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+                <img src="{% url 'store:order_qr' order.uuid %}" alt="QR"
+                     style="width: 150px; height: 150px; border: 3px solid #ff6b00; border-radius: 12px;">
+                <div>
+                    <p><strong>Содержимое QR:</strong></p>
+                    <code style="background: #f1f1f1; padding: 8px 12px; border-radius: 4px; display: block; margin: 10px 0; font-size: 13px;">
+                        {{ order.uuid }}
+                    </code>
+                    <button onclick="copyToClipboard('{{ order.uuid }}')" class="btn btn-sm btn-outline">
+                        <i class="fas fa-copy"></i> Копировать
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Лог синхронизации с 1С -->
+        <div class="sync-info">
+            <h3><i class="fas fa-sync"></i> Синхронизация с 1С</h3>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div>
+                    <strong>Статус:</strong>
+                    <span style="color: {% if order.is_synced_1c %}#27ae60{% else %}#e74c3c{% endif %};">
+                        {{ order.is_synced_1c|yesno:"✅ Отправлен,❌ Не отправлен" }}
+                    </span>
+                </div>
+                <div>
+                    <strong>GUID в 1С:</strong>
+                    <code>{{ order.guid_1c|default:"—" }}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно проверки выдачи -->
+<div id="verifyModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close-modal" onclick="closeVerifyModal()">&times;</span>
+        <h3><i class="fas fa-qrcode"></i> Проверка выдачи</h3>
+
+        <div class="form-group" style="margin: 20px 0;">
+            <label>QR заказа (от клиента)</label>
+            <input type="text" id="verifyOrderQr" class="form-control"
+                   value="{{ order.uuid }}" readonly style="background: #f8f9fa;">
+        </div>
+
+        <div class="form-group" style="margin: 20px 0;">
+            <label>QR пакета (отсканируйте)</label>
+            <input type="text" id="verifyPackageQr" class="form-control"
+                   placeholder="Отсканируйте код с пакета..." autofocus>
+        </div>
+
+        <button onclick="verifyAndGive()" class="btn btn-primary btn-block btn-lg">
+            <i class="fas fa-check"></i> Подтвердить выдачу
+        </button>
+
+        <div id="verifyResult" class="verify-result" style="display: none; margin-top: 20px;"></div>
+    </div>
+</div>
+
+<style>
+.seller-order-detail {
+    padding: 20px 0 40px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.order-header h1 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.order-status {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    display: inline-block;
+}
+.order-status.status-new { background: #d1ecf1; color: #0c5460; }
+.order-status.status-packed { background: #fff3cd; color: #856404; }
+.order-status.status-given { background: #d4edda; color: #155724; }
+.order-status.status-cancelled { background: #f8d7da; color: #721c24; }
+
+.order-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.info-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.info-card h3 {
+    margin: 0 0 12px 0;
+    color: #2c3e50;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-card p {
+    margin: 6px 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.info-card i {
+    color: #ff6b00;
+    width: 18px;
+}
+
+.info-card code {
+    background: #f1f1f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+/* Таблица */
+.order-items {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.order-items h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 18px;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.items-table th,
+.items-table td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.items-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.items-table tfoot td {
+    border-top: 2px solid #eee;
+}
+
+/* Пакеты */
+.packages-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.packages-section h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 18px;
+}
+
+.package-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.package-card:last-child {
+    margin-bottom: 0;
+}
+
+.package-info strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.package-info code {
+    font-size: 11px;
+}
+
+.package-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.no-packages {
+    text-align: center;
+    padding: 30px;
+    color: #7f8c8d;
+}
+
+/* QR preview */
+.qr-preview {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.qr-preview h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 18px;
+}
+
+/* Sync info */
+.sync-info {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 14px;
+}
+
+.sync-info h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+/* Кнопки */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+.btn-success {
+    background: #27ae60;
+    color: #fff;
+}
+.btn-success:hover { background: #219653; }
+
+.btn-primary {
+    background: #ff6b00;
+    color: #fff;
+}
+.btn-primary:hover { background: #e65100; }
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid #ff6b00;
+    color: #ff6b00;
+}
+.btn-outline:hover {
+    background: #ff6b00;
+    color: #fff;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #7f8c8d;
+}
+.close-modal:hover { color: #e74c3c; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.verify-result {
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+.verify-result.success {
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #27ae60;
+}
+.verify-result.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 2px solid #e74c3c;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .order-header > div:last-child {
+        text-align: left;
+        width: 100%;
+    }
+
+    .package-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .items-table {
+        font-size: 13px;
+    }
+
+    .items-table th,
+    .items-table td {
+        padding: 8px 6px;
+    }
+}
+</style>
+
+<script>
+// Открытие модального окна проверки
+function openVerifyModal(orderUuid, packageUuid) {
+    document.getElementById('verifyOrderQr').value = orderUuid;
+    document.getElementById('verifyPackageQr').value = '';
+    document.getElementById('verifyResult').style.display = 'none';
+    document.getElementById('verifyModal').style.display = 'flex';
+    document.getElementById('verifyPackageQr').focus();
+}
+
+// Закрытие модального окна
+function closeVerifyModal() {
+    document.getElementById('verifyModal').style.display = 'none';
+}
+
+// Копирование в буфер
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('✓ Скопировано: ' + text);
+    });
+}
+
+// Проверка и выдача заказа
+function verifyAndGive() {
+    const orderQr = document.getElementById('verifyOrderQr').value;
+    const packageQr = document.getElementById('verifyPackageQr').value;
+    const resultDiv = document.getElementById('verifyResult');
+
+    if (!packageQr) {
+        alert('Отсканируйте QR-код пакета!');
+        return;
+    }
+
+    fetch('/api/scan-verify/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            order_qr: orderQr,
+            package_qr: packageQr
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        resultDiv.style.display = 'block';
+        if (data.status === 'success') {
+            resultDiv.className = 'verify-result success';
+            resultDiv.innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 36px; margin-bottom: 10px;"></i>
+                <strong>${data.message}</strong><br>
+                <small>Клиент: ${data.client}<br>Сумма: ${data.total} ₽</small>
+            `;
+            // Авто-обновление страницы через 2 секунды
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            resultDiv.className = 'verify-result error';
+            resultDiv.innerHTML = `
+                <i class="fas fa-times-circle" style="font-size: 36px; margin-bottom: 10px;"></i>
+                <strong>${data.message}</strong>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'verify-result error';
+        resultDiv.innerHTML = '<strong>❌ Ошибка соединения!</strong>';
+    });
+}
+
+// CSRF токен
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Закрытие модального окна по клику вне
+document.getElementById('verifyModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeVerifyModal();
+});
+
+// Enter в поле пакета = проверка
+document.getElementById('verifyPackageQr')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') verifyAndGive();
+});
+</script>
+
+{% block extra_js %}
+<script>
+// 🔥 Авто-обновление для продавца (если несколько вкладок)
+let lastStatus = '{{ order.status }}';
+
+setInterval(async function() {
+    try {
+        const response = await fetch(`/api/order/{{ order.uuid }}/updates/`);
+        const data = await response.json();
+
+        if (data.status !== lastStatus) {
+            lastStatus = data.status;
+            showNotification('⚠️ Заказ изменён в другой вкладке!', 'warning');
+
+            // Предупреждаем что данные устарели
+            const header = document.querySelector('.order-header');
+            if (header) {
+                header.style.background = '#fff3cd';
+                header.style.padding = '15px';
+                header.innerHTML += '<p style="color:#856404;margin:10px 0 0">🔄 Данные устарели, обновите страницу</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}, 5000);
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px;
+        padding: 15px 25px; border-radius: 8px;
+        background: ${type === 'warning' ? '#ffc107' : '#3498db'};
+        color: #856404; font-weight: 500; z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script>
+{% endblock %}
+
+{% endblock %}

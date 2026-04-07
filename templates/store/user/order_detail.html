@@ -1,0 +1,262 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Заказ №{{ order.uuid.hex|slice:":8" }} - MZSH{% endblock %}
+
+{% block content %}
+<div class="order-detail-page">
+    <div class="container">
+        <!-- Хлебные крошки -->
+        <nav class="breadcrumbs" style="margin-bottom: 20px; color: #7f8c8d;">
+            <a href="{% url 'store:index' %}" style="color: #ff6b00;">Главная</a>
+            <span style="margin: 0 10px;">→</span>
+            <span>Мой заказ</span>
+        </nav>
+
+        <!-- Заголовок -->
+        <div class="order-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+            <h1 style="margin: 0; color: #2c3e50;">Заказ №{{ order.uuid.hex|slice:":8" }}</h1>
+            <span class="order-status status-{{ order.status }}" style="padding: 8px 20px; border-radius: 20px; font-weight: 600; font-size: 14px; text-transform: uppercase;">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+
+        <!-- Инфо карточки -->
+        <div class="order-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+            <div class="info-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 16px;"><i class="fas fa-user" style="color: #ff6b00; margin-right: 8px;"></i> Клиент</h3>
+                <p style="margin: 8px 0; color: #555; font-size: 14px;"><strong>{{ order.client.last_name }} {{ order.client.first_name }}</strong></p>
+                <p style="margin: 8px 0; color: #555; font-size: 14px;"><i class="fas fa-phone" style="color: #ff6b00; margin-right: 5px;"></i> {{ order.client.phone }}</p>
+            </div>
+
+            <div class="info-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 16px;"><i class="fas fa-clock" style="color: #ff6b00; margin-right: 8px;"></i> Дата</h3>
+                <p style="margin: 8px 0; color: #555; font-size: 14px;"><strong>Создан:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+                <p style="margin: 8px 0; color: #555; font-size: 14px;"><strong>Статус:</strong> {{ order.get_status_display }}</p>
+            </div>
+
+            <div class="info-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 16px;"><i class="fas fa-ruble-sign" style="color: #ff6b00; margin-right: 8px;"></i> Сумма</h3>
+                <p style="font-size: 28px; font-weight: 700; color: #ff6b00; margin: 0;">{{ order.total }} ₽</p>
+            </div>
+        </div>
+
+        <!-- Таймлайн статуса -->
+        <div class="order-timeline" style="background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 40px;">
+            <h3 style="margin: 0 0 25px 0; color: #2c3e50;"><i class="fas fa-stream" style="color: #ff6b00; margin-right: 8px;"></i> Статус заказа</h3>
+            <div class="timeline-steps" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+
+                <div class="timeline-step {% if order.status != 'cancelled' %}completed{% endif %}" style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; min-width: 100px;">
+                    <div class="step-circle" style="width: 50px; height: 50px; border-radius: 50%; background: {% if order.status != 'cancelled' %}#27ae60{% else %}#eee{% endif %}; display: flex; align-items: center; justify-content: center; color: {% if order.status != 'cancelled' %}#fff{% else %}#999{% endif %}; font-size: 20px; margin-bottom: 10px;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <p style="margin: 0 0 5px 0; font-weight: 600; font-size: 14px; color: #2c3e50;">Заказ принят</p>
+                    <small style="color: #7f8c8d; font-size: 12px;">{{ order.created_at|date:"d.m.Y" }}</small>
+                </div>
+
+                <div class="timeline-line" style="flex: 1; height: 3px; background: {% if order.status == 'packed' or order.status == 'given' %}#27ae60{% else %}#eee{% endif %}; margin: 0 15px; min-width: 30px;"></div>
+
+                <div class="timeline-step {% if order.status == 'packed' or order.status == 'given' %}completed{% endif %}" style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; min-width: 100px;">
+                    <div class="step-circle" style="width: 50px; height: 50px; border-radius: 50%; background: {% if order.status == 'packed' or order.status == 'given' %}#27ae60{% else %}#eee{% endif %}; display: flex; align-items: center; justify-content: center; color: {% if order.status == 'packed' or order.status == 'given' %}#fff{% else %}#999{% endif %}; font-size: 20px; margin-bottom: 10px;">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <p style="margin: 0 0 5px 0; font-weight: 600; font-size: 14px; color: #2c3e50;">Собран</p>
+                    {% if order.status == 'packed' or order.status == 'given' %}
+                    <small style="color: #27ae60; font-size: 12px;">✓ Готов</small>
+                    {% endif %}
+                </div>
+
+                <div class="timeline-line" style="flex: 1; height: 3px; background: {% if order.status == 'given' %}#27ae60{% else %}#eee{% endif %}; margin: 0 15px; min-width: 30px;"></div>
+
+                <div class="timeline-step {% if order.status == 'given' %}completed{% endif %}" style="display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; min-width: 100px;">
+                    <div class="step-circle" style="width: 50px; height: 50px; border-radius: 50%; background: {% if order.status == 'given' %}#27ae60{% else %}#eee{% endif %}; display: flex; align-items: center; justify-content: center; color: {% if order.status == 'given' %}#fff{% else %}#999{% endif %}; font-size: 20px; margin-bottom: 10px;">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <p style="margin: 0 0 5px 0; font-weight: 600; font-size: 14px; color: #2c3e50;">Выдан</p>
+                    {% if order.status == 'given' %}
+                    <small style="color: #27ae60; font-size: 12px;">✓ Получено</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Товары в заказе -->
+        <div class="order-items" style="background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 40px;">
+            <h3 style="margin: 0 0 20px 0; color: #2c3e50;"><i class="fas fa-list" style="color: #ff6b00; margin-right: 8px;"></i> Состав заказа</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 15px; text-align: left; font-weight: 600; color: #2c3e50;">Товар</th>
+                            <th style="padding: 15px; text-align: left; font-weight: 600; color: #2c3e50;">Артикул</th>
+                            <th style="padding: 15px; text-align: left; font-weight: 600; color: #2c3e50;">Цена</th>
+                            <th style="padding: 15px; text-align: left; font-weight: 600; color: #2c3e50;">Кол-во</th>
+                            <th style="padding: 15px; text-align: left; font-weight: 600; color: #2c3e50;">Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 15px;">
+                                <strong>{{ item.product.name }}</strong>
+                                {% if item.product.image %}
+                                <br><img src="{{ item.product.image.url }}" alt="" style="height: 50px; margin-top: 5px; border-radius: 4px;">
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px;">{{ item.product.article }}</td>
+                            <td style="padding: 15px;">{{ item.price }} ₽</td>
+                            <td style="padding: 15px;">{{ item.quantity }} шт.</td>
+                            <td style="padding: 15px;"><strong>{{ item.price|floatformat:0 }} × {{ item.quantity }} = {{ item.price|floatformat:0|add:"0" }} ₽</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" style="text-align: right; padding: 20px 15px; border-top: 2px solid #eee;"><strong>Итого:</strong></td>
+                            <td style="padding: 20px 15px; border-top: 2px solid #eee;"><strong style="font-size: 18px; color: #ff6b00;">{{ order.total }} ₽</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- QR-код для получения -->
+        {% if order.status == 'packed' or order.status == 'given' %}
+        <div class="order-qr" style="background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 40px; text-align: center;">
+            <h3 style="margin: 0 0 10px 0; color: #2c3e50;">
+                <i class="fas fa-qrcode" style="color: #ff6b00; margin-right: 8px;"></i>
+                QR-код для получения
+            </h3>
+
+            {% if order.status == 'packed' %}
+                <!-- ✅ Активный заказ — можно забирать -->
+                <p style="color: #27ae60; margin-bottom: 20px; font-weight: 500;">
+                    <i class="fas fa-check-circle"></i> Заказ собран! Покажите этот код продавцу
+                </p>
+                <div style="display: inline-block; padding: 15px; background: #fff; border: 3px solid #27ae60; border-radius: 12px;">
+                    <img src="{% url 'store:order_qr' order.uuid %}" alt="QR заказа" style="width: 200px; height: 200px;">
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; color: #7f8c8d;">
+                    Код: <code style="background: #f1f1f1; padding: 3px 8px; border-radius: 4px; font-family: monospace;">{{ order.uuid }}</code>
+                </p>
+
+            {% elif order.status == 'given' %}
+                <!-- ⚪ Заказ уже получен — QR недействителен -->
+                <p style="color: #7f8c8d; margin-bottom: 20px;">
+                    <i class="fas fa-info-circle"></i> Заказ уже получен
+                </p>
+                <div style="display: inline-block; padding: 15px; background: #f8f9fa; border: 3px dashed #ccc; border-radius: 12px; position: relative;">
+                    <!-- Серый фильтр поверх изображения -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 1;"></div>
+                    <img src="{% url 'store:order_qr' order.uuid %}" alt="QR заказа"
+                         style="width: 200px; height: 200px; filter: grayscale(100%) opacity(0.5);">
+                    <!-- Надпись поверх -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; font-weight: 700; color: #e74c3c; font-size: 14px; text-align: center; background: #fff; padding: 5px 15px; border-radius: 20px; border: 2px solid #e74c3c;">
+                        ⚠️ Не действителен
+                    </div>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; color: #27ae60; font-weight: 500;">
+                    <i class="fas fa-check-circle"></i> Спасибо за покупку!
+                </p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Кнопки действий -->
+        <div class="order-actions" style="text-align: center;">
+            {% if order.status == 'new' %}
+            <div class="status-hint" style="padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; background: #d1ecf1; color: #0c5460; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fas fa-info-circle"></i> Ваш заказ принят в работу. Ожидайте сбора — мы уведомим вас, когда он будет готов.
+            </div>
+            {% elif order.status == 'packed' %}
+            <div class="status-hint success" style="padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; background: #d4edda; color: #155724; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fas fa-check-circle"></i> <strong>Заказ собран!</strong> Вы можете забрать его в магазине. Покажите QR-код продавцу.
+            </div>
+            <a href="{% url 'store:contacts' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #ff6b00; color: #fff; border-radius: 50px; text-decoration: none; font-weight: 600;">
+                <i class="fas fa-map-marker-alt"></i> Как добраться
+            </a>
+            {% elif order.status == 'given' %}
+            <div class="status-hint given" style="padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; background: #d1ecf1; color: #0c5460; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fas fa-gift"></i> <strong>Спасибо за покупку!</strong> Надеемся, вы останетесь довольны.
+            </div>
+            <a href="{% url 'store:index' %}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: 2px solid #ff6b00; color: #ff6b00; border-radius: 50px; text-decoration: none; font-weight: 600;">
+                <i class="fas fa-shopping-cart"></i> Продолжить покупки
+            </a>
+            {% elif order.status == 'cancelled' %}
+            <div class="status-hint cancelled" style="padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; background: #f8d7da; color: #721c24; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fas fa-times-circle"></i> Заказ отменён
+            </div>
+            <a href="{% url 'store:index' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #ff6b00; color: #fff; border-radius: 50px; text-decoration: none; font-weight: 600;">
+                <i class="fas fa-search"></i> Выбрать другие товары
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .order-status.status-new { background: #d1ecf1; color: #0c5460; }
+    .order-status.status-packed { background: #fff3cd; color: #856404; }
+    .order-status.status-given { background: #d4edda; color: #155724; }
+    .order-status.status-cancelled { background: #f8d7da; color: #721c24; }
+
+    @media (max-width: 768px) {
+        .order-header { flex-direction: column; align-items: flex-start; }
+        .timeline-steps { flex-direction: column; align-items: flex-start; }
+        .timeline-line { width: 3px; height: 30px; margin: 5px 0; }
+    }
+</style>
+
+{% block extra_js %}
+<script>
+// 🔥 Авто-обновление статуса заказа (для клиента)
+let lastStatus = '{{ order.status }}';
+
+setInterval(async function() {
+    try {
+        const response = await fetch(`/api/order/{{ order.uuid }}/updates/`);
+        const data = await response.json();
+
+        // Если статус изменился
+        if (data.status !== lastStatus) {
+            lastStatus = data.status;
+
+            // Показываем уведомление
+            showNotification('📦 Статус заказа изменён: ' + data.status_display, 'success');
+
+            // Обновляем бейдж статуса
+            const statusBadge = document.querySelector('.order-status');
+            if (statusBadge) {
+                statusBadge.textContent = data.status_display;
+                statusBadge.className = `order-status status-${data.status}`;
+            }
+
+            // Обновляем таймлайн (галочки)
+            location.reload(); // Или можно точечно обновить элементы
+        }
+    } catch (error) {
+        console.error('Ошибка проверки обновлений:', error);
+    }
+}, 3000);  // Проверка каждые 3 секунды
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px;
+        padding: 15px 25px; border-radius: 8px;
+        background: ${type === 'success' ? '#27ae60' : '#3498db'};
+        color: white; font-weight: 500; z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    `;
+    toast.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}
+
+{% endblock %}

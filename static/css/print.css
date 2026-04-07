@@ -1,0 +1,74 @@
+/* ===== СТИЛИ ДЛЯ ПЕЧАТИ ===== */
+
+@media print {
+    /* Скрыть ненужное */
+    /*.header,*/
+    /*.footer,*/
+    /*.floating-cart,*/
+    /*.cart-sidebar,*/
+    /*.no-print,*/
+    /*.btn,*/
+    /*nav,*/
+    /*.search-section {*/
+    /*    display: none !important;*/
+    /*}*/
+
+    /* Базовые стили */
+    body {
+        background: #fff;
+        color: #000;
+        font-size: 11pt;
+        line-height: 1.4;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Ссылки */
+    a {
+        text-decoration: none;
+        color: #000;
+    }
+
+    a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 9pt;
+        color: #666;
+    }
+
+    /* Карточки товаров для печати */
+    .product-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1px solid #ccc;
+        padding: 10pt;
+        margin-bottom: 10pt;
+    }
+
+    /* Цены */
+    .price::after {
+        content: " руб.";
+    }
+
+    /* Изображения */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Заказ */
+    .order-card {
+        border: 2px solid #000;
+        padding: 15pt;
+        margin-bottom: 15pt;
+    }
+
+    /* QR-коды */
+    .qr-code {
+        display: block;
+        margin: 10pt auto;
+    }
+}

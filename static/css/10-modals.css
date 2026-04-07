@@ -1,0 +1,169 @@
+/* ===== МОДАЛЬНЫЕ ОКНА ===== */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: var(--white);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.3s ease;
+    box-shadow: var(--shadow-hover);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.close-modal {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    font-size: 2rem;
+    cursor: pointer;
+    color: var(--gray);
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-circle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    background: var(--light);
+}
+
+.close-modal:hover {
+    color: var(--danger);
+    background: var(--danger-light);
+    transform: rotate(90deg);
+}
+
+/* Модальное окно товара */
+.product-modal-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+}
+
+.modal-product-image {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    background: var(--light);
+    box-shadow: var(--shadow-md);
+}
+
+.modal-product-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.modal-product-info h2 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-sm);
+}
+
+.modal-product-info .article {
+    color: var(--gray);
+    font-family: var(--font-monospace);
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-product-info .price {
+    font-size: var(--font-size-xxl);
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: var(--spacing-md);
+    display: block;
+}
+
+.modal-product-info .description {
+    color: var(--gray);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.7;
+}
+
+.modal-product-info .stock {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--success-light);
+    color: var(--success);
+    border-radius: 20px;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    margin-bottom: var(--spacing-lg);
+}
+
+.modal-product-info .stock.out {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+/* Адаптив модальных окон */
+@media (max-width: 768px) {
+    .modal {
+        padding: var(--spacing-md);
+        align-items: flex-end;
+    }
+
+    .modal-content {
+        max-height: 85vh;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        animation: slideUpMobile 0.3s ease;
+    }
+
+    @keyframes slideUpMobile {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .product-modal-detail {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .close-modal {
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+    }
+}

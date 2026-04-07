@@ -1,0 +1,314 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Мои заказы - MZSH{% endblock %}
+
+{% block content %}
+<div class="my-orders-page">
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="page-header">
+            <h1><i class="fas fa-boxes"></i> Мои заказы</h1>
+            <a href="{% url 'store:catalog' %}" class="btn btn-outline btn-sm-mobile">
+                <i class="fas fa-shopping-cart"></i> <span class="d-none d-md-inline">Продолжить покупки</span><span class="d-md-none">В каталог</span>
+            </a>
+        </div>
+
+        <!-- Статистика -->
+        <div class="orders-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ orders_count }}</div>
+                <div class="stat-label">Всего заказов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #27ae60;">{{ active_orders }}</div>
+                <div class="stat-label">Активных</div>
+            </div>
+        </div>
+
+        <!-- ТАБЛИЦА (Для ПК) -->
+        <div class="orders-table-container desktop-only">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>№ Заказа</th>
+                        <th>Дата</th>
+                        <th>Сумма</th>
+                        <th>Статус</th>
+                        <th>Товаров</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj %}
+                    <tr class="order-row status-{{ order.status }}">
+                        <td><strong>№{{ order.uuid.hex|slice:":8" }}</strong></td>
+                        <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                        <td><strong>{{ order.total }} ₽</strong></td>
+                        <td>
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ order.items.count }} шт.</td>
+                        <td class="actions">
+                            <a href="{% url 'store:order_detail' order.uuid %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> Подробнее
+                            </a>
+                            {% if order.status == 'packed' %}
+                                <button class="btn btn-sm btn-outline" onclick="showQR('{{ order.uuid }}')" title="Показать QR-код">
+                                    <i class="fas fa-qrcode"></i> QR
+                                </button>
+                            {% elif order.status == 'given' %}
+                                <button class="btn btn-sm btn-outline" disabled style="opacity: 0.5; cursor: not-allowed;" title="Заказ уже получен">
+                                    <i class="fas fa-qrcode"></i> QR
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Пагинация (ПК) -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-chevron-left"></i> Назад
+                </a>
+                {% endif %}
+                <span class="page-info">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">
+                    Вперёд <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- КАРТОЧКИ (Для Телефонов) -->
+        <div class="orders-cards-list mobile-only">
+            {% for order in page_obj %}
+            <div class="order-card-mobile">
+                <div class="card-header">
+                    <div class="order-id">
+                        <strong>Заказ №{{ order.uuid.hex|slice:":8" }}</strong>
+                        <span class="order-date">{{ order.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <span class="status-badge status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <div class="info-row">
+                        <span class="label">Сумма:</span>
+                        <span class="value"><strong>{{ order.total }} ₽</strong></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Товаров:</span>
+                        <span class="value">{{ order.items.count }} шт.</span>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <a href="{% url 'store:order_detail' order.uuid %}" class="btn btn-primary btn-block">
+                        <i class="fas fa-eye"></i> Подробнее
+                    </a>
+
+                    {% if order.status == 'packed' %}
+                        <button class="btn btn-outline btn-block" onclick="showQR('{{ order.uuid }}')">
+                            <i class="fas fa-qrcode"></i> Показать QR
+                        </button>
+                    {% elif order.status == 'given' %}
+                        <button class="btn btn-outline btn-block" disabled style="opacity: 0.5; cursor: not-allowed;">
+                            <i class="fas fa-qrcode"></i> Получен
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация (Мобильная) -->
+        {% if page_obj.has_other_pages and page_obj.paginator.num_pages > 1 %}
+        <div class="pagination mobile-only" style="margin-top: 20px;">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">
+                <i class="fas fa-chevron-left"></i> Назад
+            </a>
+            {% endif %}
+            <span class="page-info">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">
+                Вперёд <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if not page_obj %}
+        <div class="no-orders">
+            <i class="fas fa-inbox"></i>
+            <h3>У вас пока нет заказов</h3>
+            <p>Оформите первый заказ в нашем каталоге</p>
+            <a href="{% url 'store:catalog' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-shopping-cart"></i> Перейти в каталог
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно QR -->
+<div id="qrModal" class="qr-modal" style="display: none;">
+    <div class="qr-modal-content">
+        <button class="qr-modal-close" onclick="closeQRModal()"><i class="fas fa-times"></i></button>
+        <div class="qr-modal-header">
+            <h3>QR-код для получения</h3>
+        </div>
+        <div class="qr-modal-body">
+            <img id="qrModalImage" src="" alt="QR" style="width: 220px; height: 220px;">
+        </div>
+        <div style="margin-top: 15px; font-size: 14px; color: #7f8c8d;">
+            Покажите этот код продавцу
+        </div>
+    </div>
+</div>
+
+<style>
+/* Общие стили */
+.my-orders-page { padding: 20px 0 40px; min-height: 70vh; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+.page-header h1 { margin: 0; color: #2c3e50; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+
+.orders-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; }
+.stat-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+.stat-value { font-size: 28px; font-weight: 700; color: #ff6b00; }
+.stat-label { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
+
+/* Таблица (ПК) */
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+
+.orders-table-container { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+.orders-table { width: 100%; border-collapse: collapse; }
+.orders-table th, .orders-table td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+.orders-table th { background: #f8f9fa; font-weight: 600; color: #2c3e50; font-size: 14px; }
+.orders-table tbody tr:hover { background: #f8f9fa; }
+
+.status-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.status-badge.status-new { background: #e3f2fd; color: #1976d2; }
+.status-badge.status-packed { background: #fff8e1; color: #f57c00; }
+.status-badge.status-given { background: #e8f5e9; color: #388e3c; }
+.status-badge.status-cancelled { background: #ffebee; color: #c62828; }
+
+.actions { display: flex; gap: 8px; }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: #ff6b00; color: #fff; border: none; }
+.btn-outline { background: transparent; border: 1px solid #ff6b00; color: #ff6b00; }
+.btn-block { display: block; width: 100%; justify-content: center; text-align: center; }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; background: #f8f9fa; }
+.page-info { color: #7f8c8d; font-size: 14px; }
+
+.no-orders { text-align: center; padding: 50px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.no-orders i { font-size: 50px; color: #ccc; margin-bottom: 15px; }
+.no-orders h3 { color: #2c3e50; margin-bottom: 10px; }
+.no-orders p { color: #7f8c8d; margin-bottom: 20px; }
+
+/* Карточки (Мобильные) */
+.order-card-mobile {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 15px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+.card-header {
+    padding: 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+.order-id strong { display: block; color: #2c3e50; font-size: 15px; }
+.order-date { font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px; }
+
+.card-body { padding: 15px; }
+.info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+.info-row:last-child { margin-bottom: 0; }
+.info-row .label { color: #7f8c8d; }
+.info-row .value { color: #2c3e50; }
+
+.card-actions {
+    padding: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.card-actions .btn { padding: 10px; font-size: 14px; border-radius: 8px; }
+
+/* QR Modal */
+.qr-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
+.qr-modal-content { background: #fff; border-radius: 16px; padding: 25px; max-width: 350px; width: 100%; text-align: center; position: relative; animation: slideUp 0.3s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.qr-modal-close { position: absolute; top: 15px; right: 15px; width: 32px; height: 32px; border-radius: 50%; background: #f1f1f1; border: none; font-size: 16px; cursor: pointer; color: #555; }
+.qr-modal-header h3 { margin: 0 0 15px 0; color: #2c3e50; font-size: 18px; }
+.qr-modal-body img { border: 2px solid #ff6b00; border-radius: 10px; padding: 5px; background: #fff; }
+
+/* АДАПТИВНОСТЬ */
+@media (max-width: 768px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block !important; }
+
+    .page-header h1 { font-size: 20px; }
+    .btn-sm-mobile { padding: 8px 12px; font-size: 13px; }
+
+    .orders-stats { gap: 10px; }
+    .stat-card { padding: 15px; }
+    .stat-value { font-size: 24px; }
+
+    .qr-modal-content { max-width: 90%; padding: 20px; }
+    .qr-modal-body img { width: 180px; height: 180px; }
+}
+
+/* Утилиты видимости */
+.d-none { display: none; }
+.d-md-inline { display: inline; }
+@media (max-width: 768px) {
+    .d-none { display: none; }
+    .d-md-inline { display: none; }
+    .d-md-none { display: inline; }
+}
+</style>
+
+<script>
+function showQR(orderUuid) {
+    const modal = document.getElementById('qrModal');
+    const img = document.getElementById('qrModalImage');
+    img.src = `/api/qr/order/${orderUuid}/`;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Блокируем прокрутку фона
+}
+
+function closeQRModal() {
+    document.getElementById('qrModal').style.display = 'none';
+    document.body.style.overflow = ''; // Возвращаем прокрутку
+}
+
+document.getElementById('qrModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeQRModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeQRModal();
+});
+</script>
+{% endblock %}
