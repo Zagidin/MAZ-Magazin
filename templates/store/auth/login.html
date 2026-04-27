@@ -24,10 +24,10 @@
 
             <div class="form-group">
                 <label for="username">
-                    <i class="fas fa-user"></i> Логин
+                    <i class="fas fa-user"></i> Имя / Логин
                 </label>
                 <input type="text" id="username" name="username" required
-                       class="form-control" placeholder="Введите логин">
+                       class="form-control" placeholder="Введите имя / логин">
             </div>
 
             <div class="form-group">
@@ -49,15 +49,6 @@
                 <i class="fas fa-sign-in-alt"></i> Войти
             </button>
         </form>
-
-        <!-- Блок безопасности вместо "в разработке" -->
-        <div class="security-note">
-            <i class="fas fa-shield-alt"></i>
-            <strong>Важно:</strong> Пожалуйста, запомните ваш пароль.
-            В целях безопасности автоматическое восстановление пароля через email отключено
-            (требуется настройка SMTP-сервера).
-            При утере пароля обратитесь к администратору системы.
-        </div>
 
         <div class="auth-footer">
             <p>Нет аккаунта? <a href="{% url 'store:register' %}">Зарегистрироваться</a></p>

@@ -14,33 +14,71 @@ from store.models import Order, OrderItem, OrderPackage, Product
 from django.contrib.admin.views.decorators import staff_member_required
 
 
+# @staff_member_required
+# @require_POST
+# def seller_finish_assembly(request, order_uuid):
+#     """
+#     Завершить сборку + списать товары
+#     """
+#     order = get_object_or_404(Order, uuid=order_uuid)
+#
+#     with transaction.atomic():
+#         for item in order.items.all():
+#             product = item.product
+#             if product.quantity >= item.quantity:
+#                 product.quantity -= item.quantity
+#                 product.save()
+#             else:
+#                 messages.error(request, f'❌ Недостаточно: {product.name}')
+#                 return redirect('store:seller_assemble', order_uuid=order_uuid)
+#
+#         order.status = 'packed'
+#         order.save()
+#
+#         OrderPackage.objects.get_or_create(
+#             order=order,
+#             defaults={'package_number': '1/1'}
+#         )
+#
+#     messages.success(request, '✅ Заказ собран!')
+#     return redirect('store:seller_order_detail', uuid=order.uuid)
+
 @staff_member_required
 @require_POST
 def seller_finish_assembly(request, order_uuid):
-    """
-    Завершить сборку + списать товары
-    """
+    """Завершить сборку: атомарно списать товары по позициям заказа"""
     order = get_object_or_404(Order, uuid=order_uuid)
 
+    if order.status != 'new':
+        messages.error(request, 'Заказ уже обработан или отменён.')
+        return redirect('store:seller_dashboard')
+
     with transaction.atomic():
-        for item in order.items.all():
-            product = item.product
-            if product.quantity >= item.quantity:
-                product.quantity -= item.quantity
-                product.save()
-            else:
-                messages.error(request, f'❌ Недостаточно: {product.name}')
+        # Блокируем все товары, фигурирующие в заказе
+        items = order.items.select_related('product').all()
+        product_ids = [item.product_id for item in items]
+        products = Product.objects.select_for_update().filter(id__in=product_ids)
+        product_map = {p.id: p for p in products}
+
+        for item in items:
+            product = product_map[item.product_id]
+            if product.quantity < item.quantity:
+                messages.error(request, f'❌ Недостаточно товара «{product.name}» на складе.')
                 return redirect('store:seller_assemble', order_uuid=order_uuid)
+            product.quantity -= item.quantity
+            product.save(update_fields=['quantity'])
 
+        # Обновляем статус заказа
         order.status = 'packed'
-        order.save()
+        order.save(update_fields=['status'])
 
+        # Создаём пакет для QR
         OrderPackage.objects.get_or_create(
             order=order,
             defaults={'package_number': '1/1'}
         )
 
-    messages.success(request, '✅ Заказ собран!')
+    messages.success(request, '✅ Заказ собран, товары списаны.')
     return redirect('store:seller_order_detail', uuid=order.uuid)
 
 
@@ -80,192 +118,10 @@ def seller_print_qr(request, uuid):
 
     return HttpResponse(buffer.getvalue(), content_type='image/png')
 
-
 # @staff_member_required
 # @require_POST
 # def order_add_item_api(request, order_uuid):
-#     """
-#     API: Добавить/подтвердить товар при сборке
-#     """
-#     logger = logging.getLogger(__name__)
-#
-#     try:
-#         data = json.loads(request.body)
-#         order = get_object_or_404(Order, uuid=order_uuid)
-#         product_id = data.get('product_id')
-#         quantity = int(data.get('quantity', 1))
-#
-#         product = Product.objects.get(id=product_id, is_active=True)
-#
-#         if product.quantity < quantity:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': f'Недостаточно на складе! Осталось: {product.quantity} шт.'
-#             }, status=400)
-#
-#         order_item, created = OrderItem.objects.get_or_create(
-#             order=order,
-#             product=product,
-#             defaults={'quantity': quantity, 'price': product.price}
-#         )
-#
-#         product.quantity -= quantity
-#         product.save()
-#
-#         if not created:
-#             logger.info(f"✅ Подтверждено: {order_item.product.name}")
-#             message = f'✅ {product.name} подтверждён ({quantity} шт. списано)'
-#         else:
-#             logger.info(f"✅ Добавлено: {product.name}")
-#             message = f'✅ {product.name} добавлен ({quantity} шт.)'
-#
-#         order.calculate_total()
-#
-#         return JsonResponse({
-#             'success': True,
-#             'already_in_package': False,
-#             'message': message,
-#             'item': {
-#                 'name': product.name,
-#                 'article': product.article,
-#                 'quantity': order_item.quantity,
-#                 'price': str(product.price),
-#             }
-#         })
-#
-#     except Exception as e:
-#         logger.error(f"❌ Ошибка: {str(e)}")
-#         return JsonResponse({
-#             'success': False,
-#             'error': str(e)
-#         }, status=500)
-# @staff_member_required
-# @require_POST
-# def order_add_item_api(request, order_uuid):
-#     """API: Добавить товар при сборке — НЕ БОЛЬШЕ, чем заказал клиент"""
-#     from django.shortcuts import get_object_or_404
-#     import logging
-#     logger = logging.getLogger(__name__)
-#
-#     try:
-#         data = json.loads(request.body)
-#         order = get_object_or_404(Order, uuid=order_uuid)
-#         product_id = data.get('product_id')
-#         quantity = int(data.get('quantity', 1))
-#
-#         logger.info(f"📦 Сборка: product_id={product_id}, quantity={quantity}")
-#
-#         product = Product.objects.get(id=product_id, is_active=True)
-#
-#         # 🔥 ПРОВЕРКА #1: Есть ли этот товар в заказе клиента?
-#         try:
-#             order_item = OrderItem.objects.get(order=order, product_id=product_id)
-#             ordered_qty = order_item.quantity  # 🔥 Сколько заказал клиент
-#         except OrderItem.DoesNotExist:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': f'❌ Товар {product.article} не входит в этот заказ!'
-#             }, status=400)
-#
-#         # 🔥 ПРОВЕРКА #2: Не пытаемся ли добавить больше, чем заказано?
-#         # (Для точного учёта нужно поле assembled_qty, но пока блокируем повторное добавление)
-#         already_in_order = OrderItem.objects.filter(
-#             order=order,
-#             product_id=product_id
-#         ).exists()
-#
-#         if already_in_order and quantity > 0:
-#             # Если товар уже есть в заказе — не даём добавить ещё
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': f'⚠️ {product.name} уже в заказе (заказано: {ordered_qty} шт.)'
-#             }, status=400)
-#
-#         # 🔥 ПРОВЕРКА #3: Хватит ли на складе?
-#         if product.quantity < quantity:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': f'❌ Недостаточно на складе! Осталось: {product.quantity} шт.'
-#             }, status=400)
-#
-#         # 🔥 СПИСЫВАЕМ СО СКЛАДА (только один раз!)
-#         product.quantity -= quantity
-#         product.save()
-#
-#         logger.info(f"✅ Списано: {product.name} — {quantity} шт.")
-#
-#         return JsonResponse({
-#             'success': True,
-#             'message': f'✅ {product.name} добавлен ({quantity} шт.)',
-#             'item': {
-#                 'name': product.name,
-#                 'article': product.article,
-#                 'quantity': quantity,
-#                 'price': str(product.price),
-#                 'ordered': ordered_qty,  # Для отображения в интерфейсе
-#             }
-#         })
-#
-#     except Exception as e:
-#         logger.error(f"❌ Ошибка: {str(e)}")
-#         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-@staff_member_required
-@require_POST
-def order_add_item_api(request, order_uuid):
-    """API: Добавить товар при сборке — ТОЛЬКО по кнопке, НЕ БОЛЬШЕ заказа"""
-    from django.shortcuts import get_object_or_404
-    import logging
-    logger = logging.getLogger(__name__)
-
-    try:
-        data = json.loads(request.body)
-        order = get_object_or_404(Order, uuid=order_uuid)
-        product_id = data.get('product_id')
-        quantity = int(data.get('quantity', 1))
-
-        product = Product.objects.get(id=product_id, is_active=True)
-
-        # 🔥 ПРОВЕРКА #1: Есть ли этот товар в заказе клиента?
-        try:
-            order_item = OrderItem.objects.get(order=order, product_id=product_id)
-            ordered_qty = order_item.quantity  # Сколько заказал клиент
-        except OrderItem.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'error': f'❌ Товар {product.article} не входит в этот заказ!'
-            }, status=400)
-
-        # 🔥 ПРОВЕРКА #2: Хватит ли на складе?
-        if product.quantity < quantity:
-            return JsonResponse({
-                'success': False,
-                'error': f'❌ Недостаточно на складе! Осталось: {product.quantity} шт.'
-            }, status=400)
-
-        # 🔥 СПИСЫВАЕМ СО СКЛАДА
-        product.quantity -= quantity
-        product.save()
-
-        logger.info(f"✅ Списано: {product.name} — {quantity} шт.")
-
-        return JsonResponse({
-            'success': True,
-            'message': f'✅ {product.name} добавлен ({quantity} шт.)',
-            'item': {
-                'name': product.name,
-                'article': product.article,
-                'quantity': quantity,
-                'price': str(product.price),
-            }
-        })
-
-    except Exception as e:
-        logger.error(f"❌ Ошибка: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-# @staff_member_required
-# @require_POST
-# def order_add_item_api(request, order_uuid):
-#     """API: Добавить товар при сборке — ТОЛЬКО по кнопке"""
+#     """API: Добавить товар при сборке — ТОЛЬКО по кнопке, НЕ БОЛЬШЕ заказа"""
 #     from django.shortcuts import get_object_or_404
 #     import logging
 #     logger = logging.getLogger(__name__)
@@ -281,7 +137,7 @@ def order_add_item_api(request, order_uuid):
 #         # ПРОВЕРКА #1: Есть ли этот товар в заказе клиента?
 #         try:
 #             order_item = OrderItem.objects.get(order=order, product_id=product_id)
-#             ordered_qty = order_item.quantity
+#             ordered_qty = order_item.quantity  # Сколько заказал клиент
 #         except OrderItem.DoesNotExist:
 #             return JsonResponse({
 #                 'success': False,
@@ -309,7 +165,6 @@ def order_add_item_api(request, order_uuid):
 #                 'article': product.article,
 #                 'quantity': quantity,
 #                 'price': str(product.price),
-#                 'image': product.image.url if product.image else None,
 #             }
 #         })
 #
@@ -317,6 +172,59 @@ def order_add_item_api(request, order_uuid):
 #         logger.error(f"❌ Ошибка: {str(e)}")
 #         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+@staff_member_required
+@require_POST
+def order_add_item_api(request, order_uuid):
+    """API: Добавить товар при сборке (проверка, без списания)"""
+    try:
+        data = json.loads(request.body)
+        order = get_object_or_404(Order, uuid=order_uuid)
+        product_id = data.get('product_id')
+        quantity = int(data.get('quantity', 1))
+
+        product = Product.objects.get(id=product_id, is_active=True)
+
+        # 1. Проверить, есть ли товар в исходном заказе
+        try:
+            order_item = OrderItem.objects.get(order=order, product_id=product_id)
+            ordered_qty = order_item.quantity
+        except OrderItem.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'❌ Товар {product.article} не входит в этот заказ!'
+            }, status=400)
+
+        # 2. Проверить, не превышает ли добавляемое количество заказанное
+        #    (можно запоминать, сколько уже отсканировано, но проще доверять сборщику)
+        #    Однако базовая проверка лишней не будет
+        if quantity > order_item.quantity:
+            return JsonResponse({
+                'success': False,
+                'error': f'❌ Нельзя добавить больше, чем в заказе ({order_item.quantity} шт.)'
+            }, status=400)
+
+        # 3. Проверить остаток на складе (без списания!)
+        if product.quantity < quantity:
+            return JsonResponse({
+                'success': False,
+                'error': f'❌ Недостаточно на складе! Осталось: {product.quantity} шт.'
+            }, status=400)
+
+        # НЕ СПИСЫВАЕМ – просто возвращаем успех
+        return JsonResponse({
+            'success': True,
+            'message': f'✅ {product.name} проверен ({quantity} шт.)',
+            'item': {
+                'name': product.name,
+                'article': product.article,
+                'quantity': quantity,
+                'price': str(product.price),
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка в order_add_item_api: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_POST

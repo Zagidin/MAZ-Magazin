@@ -52,6 +52,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=['article']),
             models.Index(fields=['is_active', 'quantity']),
+            models.Index(fields=['updated_at']),
         ]
 
     def __str__(self):
@@ -112,6 +113,7 @@ class Order(models.Model):
     given_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата выдачи")
     guid_1c = models.CharField(max_length=36, blank=True, default='', verbose_name="GUID в 1С")
     is_synced_1c = models.BooleanField(default=False, verbose_name="Отправлен в 1С")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
 
     class Meta:
         verbose_name = "Заказ"

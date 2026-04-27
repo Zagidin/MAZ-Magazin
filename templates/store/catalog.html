@@ -30,7 +30,6 @@
                 <select name="equipment" class="filter-select">
                     <option value="">Вся техника</option>
                     {% for eq in equipment_types %}
-                        <!-- 🔧 value = реальное название из БД -->
                         <option value="{{ eq.name }}" {% if equipment == eq.name %}selected{% endif %}>
                             {{ eq.name }}
                         </option>

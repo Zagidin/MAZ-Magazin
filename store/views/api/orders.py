@@ -30,21 +30,21 @@ def product_api(request, pk):
         product = Product.objects.get(pk=pk, is_active=True)
 
         html = f"""
-        <div class="product-modal-detail">
-            <div class="modal-product-image">
-                {'<img src="' + product.image.url + '" alt="' + product.name + '">' if product.image else '<img src="/static/img/no-image.png" alt="' + product.name + '">'}
+            <div class="product-modal-detail">
+                <div class="modal-product-image">
+                    {'<img src="' + product.image.url + '" alt="' + product.name + '">' if product.image else '<img src="/static/img/no-image.png" alt="' + product.name + '">'}
+                </div>
+                <div class="modal-product-info">
+                    <h2>{product.name}</h2>
+                    <p class="article">Артикул: {product.article}</p>
+                    <p class="price">{product.price} ₽</p>
+                    <p class="description">{product.description or 'Описание отсутствует'}</p>
+                    <p class="stock">В наличии: {product.quantity} шт.</p>
+                    <button class="btn btn-primary btn-lg" onclick="addToCart({product.id}); closeProductModal();">
+                        <i class="fas fa-cart-plus"></i> Добавить в корзину
+                    </button>
+                </div>
             </div>
-            <div class="modal-product-info">
-                <h2>{product.name}</h2>
-                <p class="article">Артикул: {product.article}</p>
-                <p class="price">{product.price} ₽</p>
-                <p class="description">{product.description or 'Описание отсутствует'}</p>
-                <p class="stock">В наличии: {product.quantity} шт.</p>
-                <button class="btn btn-primary btn-lg" onclick="addToCart({product.id}); closeProductModal();">
-                    <i class="fas fa-cart-plus"></i> Добавить в корзину
-                </button>
-            </div>
-        </div>
         """
 
         return JsonResponse({

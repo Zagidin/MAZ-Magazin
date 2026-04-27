@@ -4,7 +4,6 @@
 {% block title %}🔧 Сборка заказа №{{ order.uuid.hex|slice:":8" }}{% endblock %}
 
 {% block content %}
-<!-- 🔥 Передаём UUID в JS - ЭТО КРИТИЧНО -->
 <script>
     window.ORDER_UUID = "{{ order.uuid }}";
 </script>
