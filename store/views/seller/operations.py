@@ -1,7 +1,6 @@
 import uuid
 import json
 import qrcode
-import logging
 from io import BytesIO
 from django.db import transaction
 from django.utils import timezone
@@ -14,39 +13,13 @@ from store.models import Order, OrderItem, OrderPackage, Product
 from django.contrib.admin.views.decorators import staff_member_required
 
 
-# @staff_member_required
-# @require_POST
-# def seller_finish_assembly(request, order_uuid):
-#     """
-#     Завершить сборку + списать товары
-#     """
-#     order = get_object_or_404(Order, uuid=order_uuid)
-#
-#     with transaction.atomic():
-#         for item in order.items.all():
-#             product = item.product
-#             if product.quantity >= item.quantity:
-#                 product.quantity -= item.quantity
-#                 product.save()
-#             else:
-#                 messages.error(request, f'❌ Недостаточно: {product.name}')
-#                 return redirect('store:seller_assemble', order_uuid=order_uuid)
-#
-#         order.status = 'packed'
-#         order.save()
-#
-#         OrderPackage.objects.get_or_create(
-#             order=order,
-#             defaults={'package_number': '1/1'}
-#         )
-#
-#     messages.success(request, '✅ Заказ собран!')
-#     return redirect('store:seller_order_detail', uuid=order.uuid)
-
 @staff_member_required
 @require_POST
 def seller_finish_assembly(request, order_uuid):
-    """Завершить сборку: атомарно списать товары по позициям заказа"""
+    """
+        Завершить сборку: атомарно списать товары по позициям заказа
+    """
+
     order = get_object_or_404(Order, uuid=order_uuid)
 
     if order.status != 'new':
@@ -68,11 +41,9 @@ def seller_finish_assembly(request, order_uuid):
             product.quantity -= item.quantity
             product.save(update_fields=['quantity'])
 
-        # Обновляем статус заказа
         order.status = 'packed'
         order.save(update_fields=['status'])
 
-        # Создаём пакет для QR
         OrderPackage.objects.get_or_create(
             order=order,
             defaults={'package_number': '1/1'}
@@ -85,7 +56,7 @@ def seller_finish_assembly(request, order_uuid):
 @staff_member_required
 def seller_pack_order(request, uuid):
     """
-    Собрать заказ (сменить статус на packed)
+        Собрать заказ (сменить статус на packed)
     """
     order = get_object_or_404(Order, uuid=uuid)
 
@@ -108,7 +79,7 @@ def seller_pack_order(request, uuid):
 @staff_member_required
 def seller_print_qr(request, uuid):
     """
-    Печать QR-кода для пакета
+        Печать QR-кода для пакета
     """
     package = get_object_or_404(OrderPackage, uuid=uuid)
 
@@ -118,64 +89,13 @@ def seller_print_qr(request, uuid):
 
     return HttpResponse(buffer.getvalue(), content_type='image/png')
 
-# @staff_member_required
-# @require_POST
-# def order_add_item_api(request, order_uuid):
-#     """API: Добавить товар при сборке — ТОЛЬКО по кнопке, НЕ БОЛЬШЕ заказа"""
-#     from django.shortcuts import get_object_or_404
-#     import logging
-#     logger = logging.getLogger(__name__)
-#
-#     try:
-#         data = json.loads(request.body)
-#         order = get_object_or_404(Order, uuid=order_uuid)
-#         product_id = data.get('product_id')
-#         quantity = int(data.get('quantity', 1))
-#
-#         product = Product.objects.get(id=product_id, is_active=True)
-#
-#         # ПРОВЕРКА #1: Есть ли этот товар в заказе клиента?
-#         try:
-#             order_item = OrderItem.objects.get(order=order, product_id=product_id)
-#             ordered_qty = order_item.quantity  # Сколько заказал клиент
-#         except OrderItem.DoesNotExist:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': f'❌ Товар {product.article} не входит в этот заказ!'
-#             }, status=400)
-#
-#         # ПРОВЕРКА #2: Хватит ли на складе?
-#         if product.quantity < quantity:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': f'❌ Недостаточно на складе! Осталось: {product.quantity} шт.'
-#             }, status=400)
-#
-#         # СПИСЫВАЕМ СО СКЛАДА
-#         product.quantity -= quantity
-#         product.save()
-#
-#         logger.info(f"✅ Списано: {product.name} — {quantity} шт.")
-#
-#         return JsonResponse({
-#             'success': True,
-#             'message': f'✅ {product.name} добавлен ({quantity} шт.)',
-#             'item': {
-#                 'name': product.name,
-#                 'article': product.article,
-#                 'quantity': quantity,
-#                 'price': str(product.price),
-#             }
-#         })
-#
-#     except Exception as e:
-#         logger.error(f"❌ Ошибка: {str(e)}")
-#         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
 @staff_member_required
 @require_POST
 def order_add_item_api(request, order_uuid):
-    """API: Добавить товар при сборке (проверка, без списания)"""
+    """
+        API: Добавить товар при сборке (проверка, без списания)
+    """
+
     try:
         data = json.loads(request.body)
         order = get_object_or_404(Order, uuid=order_uuid)
@@ -223,14 +143,13 @@ def order_add_item_api(request, order_uuid):
         })
 
     except Exception as e:
-        logger.error(f"❌ Ошибка в order_add_item_api: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_POST
 def scan_verify(request):
     """
-    API для проверки QR-кодов при выдаче
+        API для проверки QR-кодов при выдаче
     """
     try:
         data = json.loads(request.body)
